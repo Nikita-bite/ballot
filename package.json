@@ -1,6 +1,9 @@
 {
   "name": "web3_ballot",
   "version": "0.1.0",
+  "engines": {
+    "npm": "8.x"
+  },
   "private": true,
   "dependencies": {
     "@metamask/detect-provider": "^1.2.0",
