@@ -1,8 +1,6 @@
 import Web3 from 'web3';
 import React from 'react'
 import './App.css';
-
-//import Contract from '@truffle/contract'
 import Contract from 'web3-eth-contract'
 import detectEthereumProvider from '@metamask/detect-provider'
 import ballotArtifact from './abi/Ballot.json'
@@ -18,11 +16,6 @@ class App extends React.Component {
                       win: "",
                       result: [],
                       counter: [0, 1, 2, 3, 4],
-                      // proposal: {0: "MetaMask 😍",
-                      //            1: "Trust Wallet 🤨",
-                      //            2: "CoinBase Wallet 😎",
-                      //            3: "MathWallet ∑",
-                      //            4: "Binance Chain Wallet 🤯"}
                       proposal: ["MetaMask 😍", "Trust Wallet 🤨", "CoinBase Wallet 😎", "MathWallet ∑", "Binance Chain Wallet 🤯"]
                       };
         this.handleChange = this.handleChange.bind(this);
@@ -99,22 +92,31 @@ class App extends React.Component {
         }
     }
 
-    votejs(){
+    proposalValidator(error, transactionHash){
+        console.log(error + ", " + transactionHash);
+        if(typeof transactionHash == "undefined") {
+            console.log(error + ", " + transactionHash);
+        } else {
+            localStorage.setItem('proposal', this.state.value);
+        }
+    }
+
+    async votejs(){
         console.log(this.state.value);
-        localStorage.setItem('proposal', this.state.value);
-        this.state.myContract.methods.vote(this.state.value).send({from: this.state.account[0]}, function(error, transactionHash){ console.log(error + ", " + transactionHash)});
+        let val = await this.state.myContract.methods.vote(this.state.value).send({from: this.state.account[0]}, (error, transactionHash) => {this.proposalValidator(error, transactionHash)});
+
+        // this.setState({value: val});
+        // localStorage.setItem('proposal', this.state.value);
     }
 
     async winningProposaljs(){
         let win = await this.state.myContract.methods.winningProposal().call({from: this.state.account[0]}, function(error, result){ console.log(error + ", " + result); return result;});
         this.setState({win: win});
-        this.setState({proposal: ["MetaMask 😍", "Trust Wallet 🤨", "CoinBase Wallet 😎", "MathWallet ∑", "Binance Chain Wallet 🤯"]});
     }
 
     async resultBallotjs(){
         let result = await this.state.myContract.methods.resultBallot().call({from: this.state.account[0]}, function(error, result){ console.log(error + ", " + result); return result;});
         this.setState({result: result});
-        this.setState({proposal: ["MetaMask 😍", "Trust Wallet 🤨", "CoinBase Wallet 😎", "MathWallet ∑", "Binance Chain Wallet 🤯"]});
     }
 
     render() {
@@ -133,7 +135,7 @@ class App extends React.Component {
                 </select>
             </label><br/><br/>
             <input type="submit" value="Проголосовать" className="sub sub-animate sub-white"/>
-            <p>Ваш выбор: { this.state.proposal[localStorage.getItem('proposal')] || this.state.proposal[this.state.value]} </p><br/>
+            <p>Ваш выбор: { this.state.proposal[localStorage.getItem('proposal')] || (<p>Вы ещё не выбрали</p>)} </p><br/>
         </form>
         <div className="res">
         <p>Лидер голосования: { (this.state.result.reduce(function(sum, elem) {return sum + elem;}, 0) > 0 && this.state.result.length > 0) ? this.state.proposal[this.state.win] : (<p>Ещё нет голосов</p>)} </p><br/>
